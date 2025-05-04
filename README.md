@@ -28,11 +28,11 @@ It includes:
 
 If you have `g++` installed, run:
 
-> g++ main.cpp lexer.cpp parser.cpp value.cpp -o parser
+> `g++ main.cpp lexer.cpp parser.cpp value.cpp -o parser`
 
 Then to run the program:
 
-> ./parser test_cases/testprog1
+`./parser test_cases/testprog`
 
 ---
 
