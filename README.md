@@ -4,7 +4,7 @@ A compiler for a simple Perl-like language, implemented in C++. It includes a le
 
 
 
-It includes:
+Contents:
 - A lexer (`lexer.cpp`)
 - A parser (`parser.cpp`)
 - A value system (`value.cpp`)
