@@ -1,6 +1,8 @@
-﻿# Parser & Interpreter Project
+﻿# Compiler for a simple Perl-Like Language in C++
 
-This project is a parser and interpreter written in C++.
+A compiler for a simple Perl-like language, implemented in C++. It includes a lexical analyzer and a parser-interpreter capable of analyzing, parsing, and executing programs written in the defined language. The compiler evaluates the program, produces the correct outputs, and provides clear error messages when syntax errors are detected.
+
+
 
 It includes:
 - A lexer (`lexer.cpp`)
