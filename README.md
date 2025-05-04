@@ -52,16 +52,6 @@ To run the program:
 
 ---
 
-## ⚙ Example Makefile
-
-parser: main.cpp lexer.cpp parser.cpp value.cpp  
- g++ main.cpp lexer.cpp parser.cpp value.cpp -o parser
-
-clean:  
- rm -f parser
-
----
-
 ## 📚 Notes
 
 - Use the **MSYS2 MinGW x64** shell on Windows, or make sure `g++` is added to your system PATH.
