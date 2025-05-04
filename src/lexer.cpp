@@ -1,9 +1,3 @@
-/*
- * lex.cpp
- * Lexical Analyzer for Simple Pascal-Like Language
- * CS280 - Fall 2023
- */
-
 #include <cctype>
 #include <map>
 
@@ -309,8 +303,3 @@ LexItem getNextToken(istream& in, int& linenum)
 		
 	return LexItem(ERR, "some strange I/O error", linenum);
 }
-
-
-
-
-

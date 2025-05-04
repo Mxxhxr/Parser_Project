@@ -45,31 +45,25 @@ public:
     
     bool GetBool() const {if(IsBool()) return Btemp; throw "RUNTIME ERROR: Value not a boolean";}
     
-    void SetType(ValType type)
-    {
-    	T = type;
+    void SetType(ValType type) {
+        T = type;
 	}
 	
-	void SetInt(int val)
-    {
-    	Itemp = val;
+	void SetInt(int val) {
+        Itemp = val;
 	}
 	
-	void SetReal(double val)
-    {
-    	Rtemp = val;
+	void SetReal(double val) {
+        Rtemp = val;
 	}
 	
-	void SetString(string val)
-    {
-    	Stemp = val;
+	void SetString(string val) {
+        Stemp = val;
 	}
 	
-	void SetBool(bool val)
-    {
-    	Btemp = val;
+	void SetBool(bool val) {
+        Btemp = val;
 	}
-	
 	
     // numeric overloaded add this to op
     Value operator+(const Value& op) const;
@@ -105,8 +99,6 @@ public:
 	Value operator||(const Value& oper) const;//Overloaded Oring operator
 	Value operator!() const;//Overloaded Not/complement operator
 	
-	
-	    
     friend ostream& operator<<(ostream& out, const Value& op) {
         if( op.IsInt() ) out << op.Itemp;
 		else if( op.IsString() ) out << op.Stemp ;
@@ -116,6 +108,5 @@ public:
         return out;
     }
 };
-
 
 #endif

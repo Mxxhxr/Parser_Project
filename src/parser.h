@@ -1,9 +1,3 @@
-/* 
- * parserInterp.h
- * Programming Assignment 3
- * Fall 2023
-*/
-
 #ifndef PARSER_H_
 #define PARSER_H_
 
@@ -13,7 +7,6 @@ using namespace std;
 
 #include "lexer.h"
 #include "value.h"
-
 
 extern bool Prog(istream& in, int& line);
 extern bool DeclPart(istream& in, int& line);

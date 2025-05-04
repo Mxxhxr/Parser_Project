@@ -30,13 +30,11 @@ namespace Parser {
 
 static int error_count = 0;
 
-int ErrCount()
-{
+int ErrCount() {
 	return error_count;
 }
 
-void ParseError(int line, string msg)
-{
+void ParseError(int line, string msg) {
 	++error_count;
 	cout << line << ": " << msg << endl;
 }

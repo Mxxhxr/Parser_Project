@@ -1,6 +1,5 @@
 #include "parser.h"
 
-
 map<string, bool> defVar;
 map<string, Token> SymTable;
 
@@ -103,4 +102,3 @@ bool ExprList(istream& in, int& line) {
 	}
 	return status;
 }
-
