@@ -40,15 +40,15 @@ Then to run the program:
 
 If you have `make` installed, run:
 
-`make`
+> `make`
 
 To clean up the build files:
 
-`make clean`
+> `make clean`
 
 To run the program:
 
-`./parser test_cases/testprog1`
+> `./parser test_cases/testprog1`
 
 ---
 
