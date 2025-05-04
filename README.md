@@ -66,9 +66,3 @@ To run the program:
 ## 💡 Example Run Command
 
 ./parser test_cases/testprog1
-
----
-
-## 👥 Author
-
-Maahir Vohra
