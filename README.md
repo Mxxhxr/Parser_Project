@@ -32,7 +32,7 @@ If you have `g++` installed, run:
 
 Then to run the program:
 
-`./parser test_cases/testprog`
+> `./parser test_cases/testprog`
 
 ---
 
