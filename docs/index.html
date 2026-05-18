@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pascal-Like Compiler — Interactive IDE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Monaco Editor -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
+<style>
+  :root {
+    --bg:          #0d0d0d;
+    --surface:     #141414;
+    --surface2:    #1a1a1a;
+    --border:      #252525;
+    --border2:     #2e2e2e;
+    --accent:      #c8f542;       /* lime green — the one pop of color */
+    --accent-dim:  #9fcc2e;
+    --accent-glow: rgba(200,245,66,0.12);
+    --text:        #e8e8e8;
+    --text-muted:  #666;
+    --text-dim:    #888;
+    --error:       #ff4d4d;
+    --error-bg:    rgba(255,77,77,0.08);
+    --success:     #c8f542;
+    --mono:        'JetBrains Mono', monospace;
+    --sans:        'Space Grotesk', sans-serif;
+    --radius:      10px;
+    --nav-h:       56px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    overflow: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    height: var(--nav-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 20;
+  }
+
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .nav-logo span {
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+
+  .nav-sep { width: 1px; height: 20px; background: var(--border2); margin: 0 4px; }
+
+  .nav-examples {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .nav-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  .example-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .example-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+  .example-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .syntax-btn {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .syntax-btn:hover { border-color: var(--border2); color: var(--text); }
+  .syntax-btn.open { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+  .run-btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 20px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent);
+    color: #0d0d0d;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: 0.01em;
+  }
+  .run-btn:hover { background: var(--accent-dim); transform: translateY(-1px); }
+  .run-btn:active { transform: translateY(0); }
+  .run-btn.running { opacity: 0.7; cursor: not-allowed; }
+
+  .run-icon { font-size: 10px; }
+
+  /* ── LAYOUT ── */
+  .workspace {
+    display: flex;
+    height: calc(100vh - var(--nav-h));
+    overflow: hidden;
+  }
+
+  /* ── SYNTAX PANEL (slide-in from left) ── */
+  .syntax-panel {
+    width: 0;
+    overflow: hidden;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+    flex-shrink: 0;
+  }
+  .syntax-panel.open { width: 300px; }
+
+  .syntax-inner {
+    width: 300px;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px 18px;
+  }
+
+  .syntax-inner::-webkit-scrollbar { width: 4px; }
+  .syntax-inner::-webkit-scrollbar-track { background: transparent; }
+  .syntax-inner::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .syntax-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .syn-section { margin-bottom: 20px; }
+
+  .syn-heading {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .syn-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
+  }
+
+  .syn-code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--accent);
+    background: var(--surface2);
+    padding: 5px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    line-height: 1.5;
+    white-space: pre;
+  }
+
+  .syn-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 0 2px;
+    line-height: 1.4;
+  }
+
+  /* ── PANES ── */
+  .panes {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .pane {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .pane-header {
+    height: 36px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .pane-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  .pane-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border2);
+  }
+  .pane-dot.ok { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .pane-dot.err { background: var(--error); box-shadow: 0 0 6px var(--error); }
+
+  .divider {
+    width: 1px;
+    background: var(--border);
+    flex-shrink: 0;
+    cursor: col-resize;
+    position: relative;
+    transition: background 0.15s;
+  }
+  .divider:hover, .divider.dragging { background: var(--accent); }
+  .divider::after {
+    content: '';
+    position: absolute;
+    inset: 0 -4px;
+  }
+
+  #editor-container {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── OUTPUT PANE ── */
+  .output-pane {
+    flex: 0 0 40%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .output-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    background: var(--bg);
+  }
+
+  .output-body::-webkit-scrollbar { width: 4px; }
+  .output-body::-webkit-scrollbar-track { background: transparent; }
+  .output-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .output-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 10px;
+    opacity: 0.3;
+    user-select: none;
+  }
+
+  .output-placeholder-icon { font-size: 28px; }
+  .output-placeholder-text { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+
+  .output-line { display: block; white-space: pre-wrap; word-break: break-word; }
+  .output-line.success { color: var(--text); }
+  .output-line.error { color: var(--error); }
+  .output-line.error-header {
+    color: var(--error);
+    background: var(--error-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border-left: 2px solid var(--error);
+    margin: 2px 0;
+  }
+  .output-line.info { color: var(--accent); }
+  .output-line.dim { color: var(--text-muted); }
+
+  /* ── STATUS BAR ── */
+  .statusbar {
+    height: 24px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 16px;
+    flex-shrink: 0;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--text-muted);
+  }
+
+  .status-item { display: flex; align-items: center; gap: 5px; }
+  .status-badge {
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .status-badge.ok { background: var(--accent-glow); color: var(--accent); }
+  .status-badge.err { background: var(--error-bg); color: var(--error); }
+  .status-badge.idle { background: var(--surface2); color: var(--text-muted); }
+
+  .status-ml { margin-left: auto; }
+
+  /* ── ABOUT SECTION ── */
+  .about-strip {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 10;
+    transition: height 0.25s cubic-bezier(0.4,0,0.2,1);
+    height: 32px;
+    overflow: hidden;
+  }
+  .about-strip.open { height: 200px; }
+
+  .about-toggle {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    transition: color 0.15s;
+  }
+  .about-toggle:hover { color: var(--text); }
+  .about-toggle .arrow { transition: transform 0.25s; font-size: 9px; }
+  .about-strip.open .about-toggle .arrow { transform: rotate(180deg); }
+
+  .about-content {
+    padding: 0 20px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    overflow: hidden;
+  }
+
+  .about-col h4 {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .about-col p {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  /* ── SPINNER ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 10px; height: 10px;
+    border: 2px solid #333;
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+
+  /* ── WASM NOTICE ── */
+  .wasm-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(200,245,66,0.06);
+    border: 1px solid rgba(200,245,66,0.15);
+    border-radius: 5px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 8px;
+  }
+  .wasm-notice strong { color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">pascal<span>-ide</span></div>
+  <div class="nav-sep"></div>
+  <div class="nav-examples">
+    <span class="nav-label">Examples</span>
+    <button class="example-btn active" onclick="loadExample('hello')">Hello World</button>
+    <button class="example-btn" onclick="loadExample('arithmetic')">Arithmetic</button>
+    <button class="example-btn" onclick="loadExample('conditionals')">Conditionals</button>
+    <button class="example-btn" onclick="loadExample('loops')">Loops</button>
+    <button class="example-btn" onclick="loadExample('error')">Syntax Error ↯</button>
+  </div>
+  <div class="nav-right">
+    <div class="wasm-notice">
+      <strong>⚙ Wasm</strong> stub mode — real compiler coming soon
+    </div>
+    <button class="syntax-btn" id="syntaxToggle" onclick="toggleSyntax()">
+      <span>{ }</span> Syntax
+    </button>
+    <button class="run-btn" id="runBtn" onclick="runCode()">
+      <span class="run-icon">▶</span> Run
+    </button>
+  </div>
+</nav>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- SYNTAX PANEL -->
+  <div class="syntax-panel" id="syntaxPanel">
+    <div class="syntax-inner">
+      <div class="syntax-title">Language Reference</div>
+
+      <div class="syn-section">
+        <div class="syn-heading">Variables</div>
+        <div class="syn-row">
+          <code class="syn-code">$var = expression;</code>
+          <span class="syn-desc">Assign a value to a variable. Variables start with <code style="color:var(--accent)">$</code>.</span>
+        </div>
+        <div class="syn-row">
+          <code class="syn-code">$x = 42;
+$name = "hello";
+$flag = true;</code>
+          <span class="syn-desc">Integers, strings, and booleans supported.</span>
+        </div>
+      </div>
+
+      <div class="syn-section">
+        <div class="syn-heading">Output</div>
+        <div class="syn-row">
+          <code class="syn-code">print $var;
+print "literal string";
+println $expr;</code>
+          <span class="syn-desc"><code style="color:var(--accent)">print</code> outputs without newline; <code style="color:var(--accent)">println</code> appends one.</span>
+        </div>
+      </div>
+
+      <div class="syn-section">
+        <div class="syn-heading">Arithmetic</div>
+        <div class="syn-row">
+          <code class="syn-code">$a + $b
+$a - $b
+$a * $b
+$a / $b
+$a % $b</code>
+          <span class="syn-desc">Standard operators. Division is integer division.</span>
+        </div>
+      </div>
+
+      <div class="syn-section">
+        <div class="syn-heading">Conditionals</div>
+        <div class="syn-row">
+          <code class="syn-code">if ($cond) {
+  ...
+} else {
+  ...
+}</code>
+          <span class="syn-desc">Standard if/else. Braces required.</span>
+        </div>
+        <div class="syn-row">
+          <code class="syn-code">== != &lt; &gt; &lt;= &gt;=</code>
+          <span class="syn-desc">Comparison operators.</span>
+        </div>
+      </div>
+
+      <div class="syn-section">
+        <div class="syn-heading">Loops</div>
+        <div class="syn-row">
+          <code class="syn-code">while ($cond) {
+  ...
+}</code>
+          <span class="syn-desc">Repeats while condition is true.</span>
+        </div>
+        <div class="syn-row">
+          <code class="syn-code">for ($i = 0; $i &lt; 10; $i = $i + 1) {
+  ...
+}</code>
+          <span class="syn-desc">C-style for loop.</span>
+        </div>
+      </div>
+
+      <div class="syn-section">
+        <div class="syn-heading">Boolean Logic</div>
+        <div class="syn-row">
+          <code class="syn-code">$a &amp;&amp; $b
+$a || $b
+!$a</code>
+          <span class="syn-desc">AND, OR, NOT operators.</span>
+        </div>
+      </div>
+
+      <div class="syn-section">
+        <div class="syn-heading">Comments</div>
+        <div class="syn-row">
+          <code class="syn-code">// single line comment
+/* multi
+   line */</code>
+          <span class="syn-desc">C-style comments supported.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANES -->
+  <div class="panes">
+    <!-- EDITOR -->
+    <div class="pane">
+      <div class="pane-header">
+        <div class="pane-dot" id="editorDot"></div>
+        <span class="pane-label">Editor</span>
+      </div>
+      <div id="editor-container"></div>
+    </div>
+
+    <!-- DRAG DIVIDER -->
+    <div class="divider" id="divider"></div>
+
+    <!-- OUTPUT -->
+    <div class="pane output-pane" id="outputPane">
+      <div class="pane-header">
+        <div class="pane-dot" id="outputDot"></div>
+        <span class="pane-label">Output</span>
+      </div>
+      <div class="output-body" id="outputBody">
+        <div class="output-placeholder" id="outputPlaceholder">
+          <div class="output-placeholder-icon">▶</div>
+          <div class="output-placeholder-text">Press Run to execute</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="status-item">
+    <span class="status-badge idle" id="statusBadge">IDLE</span>
+  </div>
+  <div class="status-item" id="statusMsg">Ready</div>
+  <div class="status-item status-ml">
+    <span id="cursorPos">Ln 1, Col 1</span>
+  </div>
+  <div class="status-item">Pascal-Like</div>
+</div>
+
+<!-- ABOUT STRIP -->
+<div class="about-strip" id="aboutStrip">
+  <div class="about-toggle" onclick="toggleAbout()">
+    <span class="arrow">▲</span>
+    About This Project
+  </div>
+  <div class="about-content">
+    <div class="about-col">
+      <h4>What is this?</h4>
+      <p>A custom compiler built from scratch in C++ for a Pascal/Perl-inspired language. It performs lexical analysis, parsing, and interpretation — converting source code into a token stream, validating grammar, and executing the program.</p>
+    </div>
+    <div class="about-col">
+      <h4>How it works</h4>
+      <p>The C++ source is compiled to WebAssembly via Emscripten, so the <em>actual</em> compiler runs directly in your browser — no server. The editor uses Monaco (VS Code's engine) with a custom language definition for syntax highlighting and error markers.</p>
+    </div>
+    <div class="about-col">
+      <h4>What I built</h4>
+      <p>Lexer (tokenizer), recursive-descent parser, AST evaluator, and a value system supporting integers, strings, and booleans. Error messages include line and column numbers for precise feedback.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── EXAMPLE PROGRAMS ──────────────────────────────────────────────
+const EXAMPLES = {
+  hello: {
+    label: 'Hello World',
+    code: `// Classic Hello World
+$message = "Hello, World!";
+println $message;
+
+$name = "Compiler";
+print "Welcome to the ";
+print $name;
+println " — running in your browser via WebAssembly.";`,
+    output: [
+      { t: 'success', s: 'Hello, World!' },
+      { t: 'success', s: 'Welcome to the Compiler — running in your browser via WebAssembly.' },
+    ]
+  },
+
+  arithmetic: {
+    label: 'Arithmetic',
+    code: `// Arithmetic operations
+$a = 15;
+$b = 4;
+
+println $a + $b;    // 19
+println $a - $b;    // 11
+println $a * $b;    // 60
+println $a / $b;    // 3  (integer division)
+println $a % $b;    // 3  (remainder)
+
+// Compound expressions
+$result = ($a * $b) + ($a - $b);
+print "Result: ";
+println $result;`,
+    output: [
+      { t: 'success', s: '19' },
+      { t: 'success', s: '11' },
+      { t: 'success', s: '60' },
+      { t: 'success', s: '3' },
+      { t: 'success', s: '3' },
+      { t: 'success', s: 'Result: 71' },
+    ]
+  },
+
+  conditionals: {
+    label: 'Conditionals',
+    code: `// If / else demonstration
+$x = 42;
+
+if ($x > 100) {
+  println "Large number";
+} else if ($x > 10) {
+  println "Medium number";
+} else {
+  println "Small number";
+}
+
+// Boolean operators
+$a = true;
+$b = false;
+
+if ($a && !$b) {
+  println "Logic works!";
+}
+
+// Comparison chain
+$score = 85;
+if ($score >= 90) {
+  println "Grade: A";
+} else if ($score >= 80) {
+  println "Grade: B";
+} else {
+  println "Grade: C or below";
+}`,
+    output: [
+      { t: 'success', s: 'Medium number' },
+      { t: 'success', s: 'Logic works!' },
+      { t: 'success', s: 'Grade: B' },
+    ]
+  },
+
+  loops: {
+    label: 'Loops',
+    code: `// While loop
+$i = 1;
+$sum = 0;
+while ($i <= 5) {
+  $sum = $sum + $i;
+  $i = $i + 1;
+}
+print "Sum 1-5: ";
+println $sum;
+
+// For loop — multiplication table
+$n = 3;
+$j = 1;
+while ($j <= 5) {
+  print $n;
+  print " x ";
+  print $j;
+  print " = ";
+  println $n * $j;
+  $j = $j + 1;
+}`,
+    output: [
+      { t: 'success', s: 'Sum 1-5: 15' },
+      { t: 'success', s: '3 x 1 = 3' },
+      { t: 'success', s: '3 x 2 = 6' },
+      { t: 'success', s: '3 x 3 = 9' },
+      { t: 'success', s: '3 x 4 = 12' },
+      { t: 'success', s: '3 x 5 = 15' },
+    ]
+  },
+
+  error: {
+    label: 'Syntax Error',
+    code: `// This program contains intentional syntax errors
+// to demonstrate the compiler's error reporting.
+
+$x = 10;
+println $x;
+
+// Missing semicolon on next line:
+$y = 20
+
+// Undefined variable:
+println $z;
+
+// Mismatched brace:
+if ($x > 5) {
+  println "ok";
+`,
+    output: [
+      { t: 'success', s: '10' },
+      { t: 'error-header', s: 'SYNTAX ERROR — Line 8, Col 1' },
+      { t: 'error', s: '  Expected ";" but found end of statement.' },
+      { t: 'error', s: '  → $y = 20' },
+      { t: 'dim', s: '  Compilation halted.' },
+    ],
+    errors: [{ line: 8, col: 1, msg: 'Expected ";" but found end of statement.' }]
+  }
+};
+
+// ── MONACO SETUP ─────────────────────────────────────────────────
+let editor;
+let currentExample = 'hello';
+
+require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+
+require(['vs/editor/editor.main'], function() {
+  // Register custom language
+  monaco.languages.register({ id: 'pascal-like' });
+
+  monaco.languages.setMonarchTokensProvider('pascal-like', {
+    keywords: ['if', 'else', 'while', 'for', 'print', 'println', 'true', 'false'],
+    tokenizer: {
+      root: [
+        [/\/\/.*$/, 'comment'],
+        [/\/\*/, 'comment', '@comment'],
+        [/"[^"]*"/, 'string'],
+        [/\$[a-zA-Z_][a-zA-Z0-9_]*/, 'variable'],
+        [/\b(if|else|while|for|print|println|true|false)\b/, 'keyword'],
+        [/[0-9]+/, 'number'],
+        [/[+\-*\/%=<>!&|]+/, 'operator'],
+        [/[;{}()\[\]]/, 'delimiter'],
+      ],
+      comment: [
+        [/[^/*]+/, 'comment'],
+        [/\*\//, 'comment', '@pop'],
+        [/[/*]/, 'comment']
+      ]
+    }
+  });
+
+  monaco.editor.defineTheme('pascal-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'keyword',   foreground: 'c8f542', fontStyle: 'bold' },
+      { token: 'variable',  foreground: '7dd3fc' },
+      { token: 'string',    foreground: 'fbbf24' },
+      { token: 'number',    foreground: 'fb923c' },
+      { token: 'comment',   foreground: '4b5563', fontStyle: 'italic' },
+      { token: 'operator',  foreground: 'e879f9' },
+      { token: 'delimiter', foreground: '9ca3af' },
+    ],
+    colors: {
+      'editor.background':          '#0d0d0d',
+      'editor.foreground':          '#e8e8e8',
+      'editor.lineHighlightBackground': '#141414',
+      'editorLineNumber.foreground':    '#333',
+      'editorLineNumber.activeForeground': '#666',
+      'editor.selectionBackground':     '#c8f54222',
+      'editorCursor.foreground':        '#c8f542',
+      'editorIndentGuide.background':   '#1e1e1e',
+      'editorWidget.background':        '#141414',
+      'editorSuggestWidget.background': '#141414',
+    }
+  });
+
+  editor = monaco.editor.create(document.getElementById('editor-container'), {
+    value: EXAMPLES[currentExample].code,
+    language: 'pascal-like',
+    theme: 'pascal-dark',
+    fontSize: 13.5,
+    fontFamily: "'JetBrains Mono', monospace",
+    fontLigatures: true,
+    lineHeight: 22,
+    padding: { top: 14, bottom: 14 },
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    renderLineHighlight: 'line',
+    cursorBlinking: 'smooth',
+    cursorSmoothCaretAnimation: 'on',
+    smoothScrolling: true,
+    bracketPairColorization: { enabled: true },
+    automaticLayout: true,
+    wordWrap: 'off',
+    overviewRulerLanes: 0,
+    hideCursorInOverviewRuler: true,
+    scrollbar: {
+      vertical: 'visible',
+      horizontal: 'auto',
+      verticalScrollbarSize: 4,
+      horizontalScrollbarSize: 4,
+    }
+  });
+
+  editor.onDidChangeCursorPosition(e => {
+    document.getElementById('cursorPos').textContent =
+      `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
+  });
+
+  editor.onDidChangeModelContent(() => {
+    // Clear markers when user edits
+    monaco.editor.setModelMarkers(editor.getModel(), 'pascal-lint', []);
+    setStatus('idle');
+  });
+});
+
+// ── EXAMPLE LOADING ───────────────────────────────────────────────
+function loadExample(key) {
+  currentExample = key;
+  document.querySelectorAll('.example-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  if (editor) {
+    editor.setValue(EXAMPLES[key].code);
+    editor.setScrollTop(0);
+    clearOutput();
+    setStatus('idle');
+    monaco.editor.setModelMarkers(editor.getModel(), 'pascal-lint', []);
+    document.getElementById('editorDot').className = 'pane-dot';
+    document.getElementById('outputDot').className = 'pane-dot';
+  }
+}
+
+// ── RUN (stub — swap for real Wasm call) ─────────────────────────
+function runCode() {
+  if (!editor) return;
+  const btn = document.getElementById('runBtn');
+  if (btn.classList.contains('running')) return;
+
+  btn.classList.add('running');
+  btn.innerHTML = '<span class="spinner"></span> Running';
+  setStatus('running');
+  clearOutput();
+
+  const ex = EXAMPLES[currentExample];
+
+  // Simulate compile time (50–150ms)
+  const delay = 60 + Math.random() * 100;
+
+  setTimeout(() => {
+    btn.classList.remove('running');
+    btn.innerHTML = '<span class="run-icon">▶</span> Run';
+
+    const hasError = ex.errors && ex.errors.length > 0;
+
+    // Render output lines
+    const body = document.getElementById('outputBody');
+    body.innerHTML = '';
+    ex.output.forEach(line => {
+      const el = document.createElement('span');
+      el.className = 'output-line ' + line.t;
+      el.textContent = line.s;
+      body.appendChild(el);
+      body.appendChild(document.createElement('br'));
+    });
+
+    // Set Monaco error markers
+    if (ex.errors && editor) {
+      const markers = ex.errors.map(e => ({
+        severity: monaco.MarkerSeverity.Error,
+        startLineNumber: e.line,
+        startColumn: e.col,
+        endLineNumber: e.line,
+        endColumn: 999,
+        message: e.msg,
+        source: 'pascal-compiler'
+      }));
+      monaco.editor.setModelMarkers(editor.getModel(), 'pascal-lint', markers);
+    }
+
+    if (hasError) {
+      setStatus('error');
+      document.getElementById('editorDot').className = 'pane-dot err';
+      document.getElementById('outputDot').className = 'pane-dot err';
+    } else {
+      setStatus('ok');
+      document.getElementById('editorDot').className = 'pane-dot ok';
+      document.getElementById('outputDot').className = 'pane-dot ok';
+    }
+  }, delay);
+}
+
+// ── UI HELPERS ────────────────────────────────────────────────────
+function clearOutput() {
+  const body = document.getElementById('outputBody');
+  body.innerHTML = `
+    <div class="output-placeholder" id="outputPlaceholder">
+      <div class="output-placeholder-icon">▶</div>
+      <div class="output-placeholder-text">Running…</div>
+    </div>`;
+}
+
+function setStatus(state) {
+  const badge = document.getElementById('statusBadge');
+  const msg = document.getElementById('statusMsg');
+  if (state === 'idle') {
+    badge.className = 'status-badge idle';
+    badge.textContent = 'IDLE';
+    msg.textContent = 'Ready';
+  } else if (state === 'running') {
+    badge.className = 'status-badge idle';
+    badge.textContent = 'RUNNING';
+    msg.textContent = 'Compiling…';
+  } else if (state === 'ok') {
+    badge.className = 'status-badge ok';
+    badge.textContent = 'OK';
+    msg.textContent = 'Compiled successfully';
+  } else if (state === 'error') {
+    badge.className = 'status-badge err';
+    badge.textContent = 'ERROR';
+    msg.textContent = 'Compilation failed';
+  }
+}
+
+function toggleSyntax() {
+  const panel = document.getElementById('syntaxPanel');
+  const btn = document.getElementById('syntaxToggle');
+  panel.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
+function toggleAbout() {
+  document.getElementById('aboutStrip').classList.toggle('open');
+}
+
+// ── DRAG TO RESIZE PANES ──────────────────────────────────────────
+const divider = document.getElementById('divider');
+let dragging = false;
+
+divider.addEventListener('mousedown', e => {
+  dragging = true;
+  divider.classList.add('dragging');
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+});
+
+document.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const panes = document.querySelector('.panes');
+  const rect = panes.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  const clamped = Math.max(0.25, Math.min(0.75, ratio));
+  const editorPane = document.querySelector('.pane:first-child');
+  const outputPane = document.getElementById('outputPane');
+  editorPane.style.flex = `0 0 ${clamped * 100}%`;
+  outputPane.style.flex = `0 0 ${(1 - clamped) * 100}%`;
+});
+
+document.addEventListener('mouseup', () => {
+  dragging = false;
+  divider.classList.remove('dragging');
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+  if (editor) editor.layout();
+});
+
+// ── KEYBOARD SHORTCUT: Ctrl/Cmd+Enter to run ─────────────────────
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    runCode();
+  }
+});
+</script>
+</body>
+</html>
