@@ -10,6 +10,9 @@
 <!-- Monaco Editor -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 
+<!-- Emscripten Wasm glue -->
+<script src="parser.js"></script>
+
 <style>
   :root {
     --bg:          #0d0d0d;
@@ -434,20 +437,7 @@
     display: inline-block;
   }
 
-  /* ── WASM NOTICE ── */
-  .wasm-notice {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    background: rgba(200,245,66,0.06);
-    border: 1px solid rgba(200,245,66,0.15);
-    border-radius: 5px;
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-left: 8px;
-  }
-  .wasm-notice strong { color: var(--accent); font-weight: 600; }
+
 </style>
 </head>
 <body>
@@ -465,9 +455,7 @@
     <button class="example-btn" onclick="loadExample('error')">Syntax Error ↯</button>
   </div>
   <div class="nav-right">
-    <div class="wasm-notice">
-      <strong>⚙ Wasm</strong> stub mode — real compiler coming soon
-    </div>
+
     <button class="syntax-btn" id="syntaxToggle" onclick="toggleSyntax()">
       <span>{ }</span> Syntax
     </button>
@@ -486,90 +474,100 @@
       <div class="syntax-title">Language Reference</div>
 
       <div class="syn-section">
-        <div class="syn-heading">Variables</div>
+        <div class="syn-heading">Program Structure</div>
         <div class="syn-row">
-          <code class="syn-code">$var = expression;</code>
-          <span class="syn-desc">Assign a value to a variable. Variables start with <code style="color:var(--accent)">$</code>.</span>
+          <code class="syn-code">program Name;
+var
+  x : integer;
+begin
+  { statements }
+end.</code>
+          <span class="syn-desc">Every program starts with <code style="color:var(--accent)">program</code>, declares variables in <code style="color:var(--accent)">var</code>, and wraps statements in <code style="color:var(--accent)">begin...end.</code></span>
+        </div>
+      </div>
+
+      <div class="syn-section">
+        <div class="syn-heading">Variables & Types</div>
+        <div class="syn-row">
+          <code class="syn-code">var
+  a, b : integer;
+  x    : real;
+  name : string;
+  flag : boolean;</code>
+          <span class="syn-desc">Declare variables before <code style="color:var(--accent)">begin</code>. Types: <code style="color:var(--accent)">integer</code>, <code style="color:var(--accent)">real</code>, <code style="color:var(--accent)">string</code>, <code style="color:var(--accent)">boolean</code>.</span>
         </div>
         <div class="syn-row">
-          <code class="syn-code">$x = 42;
-$name = "hello";
-$flag = true;</code>
-          <span class="syn-desc">Integers, strings, and booleans supported.</span>
+          <code class="syn-code">x := 42;
+name := 'hello';</code>
+          <span class="syn-desc">Assignment uses <code style="color:var(--accent)">:=</code> (not <code style="color:var(--accent)">=</code>).</span>
         </div>
       </div>
 
       <div class="syn-section">
         <div class="syn-heading">Output</div>
         <div class="syn-row">
-          <code class="syn-code">print $var;
-print "literal string";
-println $expr;</code>
-          <span class="syn-desc"><code style="color:var(--accent)">print</code> outputs without newline; <code style="color:var(--accent)">println</code> appends one.</span>
+          <code class="syn-code">write(x);
+writeln(x);
+writeln('hello ', name);</code>
+          <span class="syn-desc"><code style="color:var(--accent)">write</code> prints without newline; <code style="color:var(--accent)">writeln</code> appends one. Multiple args separated by commas.</span>
         </div>
       </div>
 
       <div class="syn-section">
         <div class="syn-heading">Arithmetic</div>
         <div class="syn-row">
-          <code class="syn-code">$a + $b
-$a - $b
-$a * $b
-$a / $b
-$a % $b</code>
-          <span class="syn-desc">Standard operators. Division is integer division.</span>
+          <code class="syn-code">a + b
+a - b
+a * b
+a / b
+a div b
+a mod b</code>
+          <span class="syn-desc"><code style="color:var(--accent)">div</code> = integer division, <code style="color:var(--accent)">mod</code> = remainder, <code style="color:var(--accent)">/</code> = real division.</span>
         </div>
       </div>
 
       <div class="syn-section">
         <div class="syn-heading">Conditionals</div>
         <div class="syn-row">
-          <code class="syn-code">if ($cond) {
-  ...
-} else {
-  ...
-}</code>
-          <span class="syn-desc">Standard if/else. Braces required.</span>
+          <code class="syn-code">if x > 10 then
+  writeln('big')
+else
+  writeln('small');</code>
+          <span class="syn-desc">Uses <code style="color:var(--accent)">then</code> keyword. For multiple statements use <code style="color:var(--accent)">begin...end</code>.</span>
         </div>
         <div class="syn-row">
-          <code class="syn-code">== != &lt; &gt; &lt;= &gt;=</code>
-          <span class="syn-desc">Comparison operators.</span>
+          <code class="syn-code">= > < >= <=</code>
+          <span class="syn-desc">Comparison operators. Equality is <code style="color:var(--accent)">=</code> (not <code style="color:var(--accent)">==</code>).</span>
         </div>
       </div>
 
       <div class="syn-section">
         <div class="syn-heading">Loops</div>
         <div class="syn-row">
-          <code class="syn-code">while ($cond) {
-  ...
-}</code>
-          <span class="syn-desc">Repeats while condition is true.</span>
-        </div>
-        <div class="syn-row">
-          <code class="syn-code">for ($i = 0; $i &lt; 10; $i = $i + 1) {
-  ...
-}</code>
-          <span class="syn-desc">C-style for loop.</span>
+          <code class="syn-code">while i <= 10 do
+begin
+  writeln(i);
+  i := i + 1
+end;</code>
+          <span class="syn-desc">Uses <code style="color:var(--accent)">do</code> keyword. Body must be a single statement or <code style="color:var(--accent)">begin...end</code>.</span>
         </div>
       </div>
 
       <div class="syn-section">
         <div class="syn-heading">Boolean Logic</div>
         <div class="syn-row">
-          <code class="syn-code">$a &amp;&amp; $b
-$a || $b
-!$a</code>
-          <span class="syn-desc">AND, OR, NOT operators.</span>
+          <code class="syn-code">a and b
+a or b
+not a</code>
+          <span class="syn-desc">Keywords, not symbols. Values: <code style="color:var(--accent)">true</code>, <code style="color:var(--accent)">false</code>.</span>
         </div>
       </div>
 
       <div class="syn-section">
         <div class="syn-heading">Comments</div>
         <div class="syn-row">
-          <code class="syn-code">// single line comment
-/* multi
-   line */</code>
-          <span class="syn-desc">C-style comments supported.</span>
+          <code class="syn-code">{ this is a comment }</code>
+          <span class="syn-desc">Curly braces for comments (Pascal style).</span>
         </div>
       </div>
     </div>
@@ -640,148 +638,123 @@ $a || $b
 </div>
 
 <script>
-// ── EXAMPLE PROGRAMS ──────────────────────────────────────────────
+// ── EXAMPLE PROGRAMS (real Pascal-like syntax) ────────────────────
 const EXAMPLES = {
   hello: {
     label: 'Hello World',
-    code: `// Classic Hello World
-$message = "Hello, World!";
-println $message;
-
-$name = "Compiler";
-print "Welcome to the ";
-print $name;
-println " — running in your browser via WebAssembly.";`,
-    output: [
-      { t: 'success', s: 'Hello, World!' },
-      { t: 'success', s: 'Welcome to the Compiler — running in your browser via WebAssembly.' },
-    ]
+    code: `program Hello;
+var
+  message : string;
+begin
+  message := 'Hello, World!';
+  writeln(message);
+  writeln('Running in your browser via WebAssembly.')
+end.`
   },
 
   arithmetic: {
     label: 'Arithmetic',
-    code: `// Arithmetic operations
-$a = 15;
-$b = 4;
-
-println $a + $b;    // 19
-println $a - $b;    // 11
-println $a * $b;    // 60
-println $a / $b;    // 3  (integer division)
-println $a % $b;    // 3  (remainder)
-
-// Compound expressions
-$result = ($a * $b) + ($a - $b);
-print "Result: ";
-println $result;`,
-    output: [
-      { t: 'success', s: '19' },
-      { t: 'success', s: '11' },
-      { t: 'success', s: '60' },
-      { t: 'success', s: '3' },
-      { t: 'success', s: '3' },
-      { t: 'success', s: 'Result: 71' },
-    ]
+    code: `program Arithmetic;
+var
+  a, b, result : integer;
+begin
+  a := 15;
+  b := 4;
+  writeln(a + b);
+  writeln(a - b);
+  writeln(a * b);
+  writeln(a div b);
+  writeln(a mod b);
+  result := (a * b) + (a - b);
+  write('Result: ');
+  writeln(result)
+end.`
   },
 
   conditionals: {
     label: 'Conditionals',
-    code: `// If / else demonstration
-$x = 42;
+    code: `program Conditionals;
+var
+  x, score : integer;
+  a, b : boolean;
+begin
+  x := 42;
+  if x > 100 then
+    writeln('Large number')
+  else if x > 10 then
+    writeln('Medium number')
+  else
+    writeln('Small number');
 
-if ($x > 100) {
-  println "Large number";
-} else if ($x > 10) {
-  println "Medium number";
-} else {
-  println "Small number";
-}
+  a := true;
+  b := false;
+  if a and (not b) then
+    writeln('Logic works!');
 
-// Boolean operators
-$a = true;
-$b = false;
-
-if ($a && !$b) {
-  println "Logic works!";
-}
-
-// Comparison chain
-$score = 85;
-if ($score >= 90) {
-  println "Grade: A";
-} else if ($score >= 80) {
-  println "Grade: B";
-} else {
-  println "Grade: C or below";
-}`,
-    output: [
-      { t: 'success', s: 'Medium number' },
-      { t: 'success', s: 'Logic works!' },
-      { t: 'success', s: 'Grade: B' },
-    ]
+  score := 85;
+  if score >= 90 then
+    writeln('Grade: A')
+  else if score >= 80 then
+    writeln('Grade: B')
+  else
+    writeln('Grade: C or below')
+end.`
   },
 
   loops: {
     label: 'Loops',
-    code: `// While loop
-$i = 1;
-$sum = 0;
-while ($i <= 5) {
-  $sum = $sum + $i;
-  $i = $i + 1;
-}
-print "Sum 1-5: ";
-println $sum;
+    code: `program Loops;
+var
+  i, sum, n : integer;
+begin
+  i := 1;
+  sum := 0;
+  while i <= 5 do
+  begin
+    sum := sum + i;
+    i := i + 1
+  end;
+  write('Sum 1-5: ');
+  writeln(sum);
 
-// For loop — multiplication table
-$n = 3;
-$j = 1;
-while ($j <= 5) {
-  print $n;
-  print " x ";
-  print $j;
-  print " = ";
-  println $n * $j;
-  $j = $j + 1;
-}`,
-    output: [
-      { t: 'success', s: 'Sum 1-5: 15' },
-      { t: 'success', s: '3 x 1 = 3' },
-      { t: 'success', s: '3 x 2 = 6' },
-      { t: 'success', s: '3 x 3 = 9' },
-      { t: 'success', s: '3 x 4 = 12' },
-      { t: 'success', s: '3 x 5 = 15' },
-    ]
+  n := 3;
+  i := 1;
+  while i <= 5 do
+  begin
+    write(n);
+    write(' x ');
+    write(i);
+    write(' = ');
+    writeln(n * i);
+    i := i + 1
+  end
+end.`
   },
 
   error: {
-    label: 'Syntax Error',
-    code: `// This program contains intentional syntax errors
-// to demonstrate the compiler's error reporting.
-
-$x = 10;
-println $x;
-
-// Missing semicolon on next line:
-$y = 20
-
-// Undefined variable:
-println $z;
-
-// Mismatched brace:
-if ($x > 5) {
-  println "ok";
-`,
-    output: [
-      { t: 'success', s: '10' },
-      { t: 'error-header', s: 'SYNTAX ERROR — Line 8, Col 1' },
-      { t: 'error', s: '  Expected ";" but found end of statement.' },
-      { t: 'error', s: '  → $y = 20' },
-      { t: 'dim', s: '  Compilation halted.' },
-    ],
-    errors: [{ line: 8, col: 1, msg: 'Expected ";" but found end of statement.' }]
+    label: 'Syntax Error ↯',
+    code: `program SyntaxError;
+var
+  x : integer;
+begin
+  x := 10;
+  writeln(x);
+  x := 20
+  writeln(x)
+end.`
   }
 };
+
+// ── WASM MODULE ───────────────────────────────────────────────────
+let wasmModule = null;
+
+// Initialize the Wasm module on page load
+createModule().then(mod => {
+  wasmModule = mod;
+  console.log('Wasm compiler loaded.');
+}).catch(err => {
+  console.error('Failed to load Wasm module:', err);
+});
 
 // ── MONACO SETUP ─────────────────────────────────────────────────
 let editor;
@@ -790,26 +763,30 @@ let currentExample = 'hello';
 require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
 
 require(['vs/editor/editor.main'], function() {
-  // Register custom language
+  // Register custom Pascal-like language
   monaco.languages.register({ id: 'pascal-like' });
 
   monaco.languages.setMonarchTokensProvider('pascal-like', {
-    keywords: ['if', 'else', 'while', 'for', 'print', 'println', 'true', 'false'],
+    keywords: [
+      'program','var','begin','end','if','else','then','while','do',
+      'write','writeln','div','mod','and','or','not',
+      'true','false','integer','real','string','boolean'
+    ],
     tokenizer: {
       root: [
-        [/\/\/.*$/, 'comment'],
-        [/\/\*/, 'comment', '@comment'],
-        [/"[^"]*"/, 'string'],
-        [/\$[a-zA-Z_][a-zA-Z0-9_]*/, 'variable'],
-        [/\b(if|else|while|for|print|println|true|false)\b/, 'keyword'],
+        [/\{/, 'comment', '@comment'],         // { block comment }
+        [/'[^']*'/, 'string'],                  // 'string literals'
+        [/\b(program|var|begin|end|if|else|then|while|do|write|writeln|div|mod|and|or|not|true|false|integer|real|string|boolean)\b/, 'keyword'],
+        [/[0-9]+\.[0-9]+/, 'number.float'],
         [/[0-9]+/, 'number'],
-        [/[+\-*\/%=<>!&|]+/, 'operator'],
-        [/[;{}()\[\]]/, 'delimiter'],
+        [/:=/, 'operator'],
+        [/[+\-*\/=<>]/, 'operator'],
+        [/[;:,.()\[\]]/, 'delimiter'],
+        [/[a-zA-Z_][a-zA-Z0-9_]*/, 'identifier'],
       ],
       comment: [
-        [/[^/*]+/, 'comment'],
-        [/\*\//, 'comment', '@pop'],
-        [/[/*]/, 'comment']
+        [/[^}]+/, 'comment'],
+        [/}/, 'comment', '@pop'],
       ]
     }
   });
@@ -896,8 +873,8 @@ function loadExample(key) {
   }
 }
 
-// ── RUN (stub — swap for real Wasm call) ─────────────────────────
-function runCode() {
+// ── RUN — real Wasm compiler ──────────────────────────────────────
+async function runCode() {
   if (!editor) return;
   const btn = document.getElementById('runBtn');
   if (btn.classList.contains('running')) return;
@@ -906,53 +883,122 @@ function runCode() {
   btn.innerHTML = '<span class="spinner"></span> Running';
   setStatus('running');
   clearOutput();
+  monaco.editor.setModelMarkers(editor.getModel(), 'pascal-lint', []);
 
-  const ex = EXAMPLES[currentExample];
-
-  // Simulate compile time (50–150ms)
-  const delay = 60 + Math.random() * 100;
-
-  setTimeout(() => {
+  if (!wasmModule) {
+    showOutput('ERROR: Compiler not loaded yet. Please wait a moment and try again.', true);
     btn.classList.remove('running');
     btn.innerHTML = '<span class="run-icon">▶</span> Run';
+    setStatus('error');
+    return;
+  }
 
-    const hasError = ex.errors && ex.errors.length > 0;
+  const code = editor.getValue();
+  const filename = '/tmp/program.pas';
 
-    // Render output lines
-    const body = document.getElementById('outputBody');
-    body.innerHTML = '';
-    ex.output.forEach(line => {
+  // Capture stdout and stderr
+  let stdout = '';
+  let stderr = '';
+  const origPrint   = wasmModule.print;
+  const origPrintErr = wasmModule.printErr;
+  wasmModule.print    = (s) => { stdout += s + '\n'; };
+  wasmModule.printErr = (s) => { stderr += s + '\n'; };
+
+  try {
+    // Write source code into the Wasm virtual filesystem
+    wasmModule.FS.writeFile(filename, code);
+
+    // Call the compiler's main() with the filename as argv[1]
+    wasmModule.callMain([filename]);
+  } catch (e) {
+    stderr += 'Runtime exception: ' + e.toString() + '\n';
+  }
+
+  // Restore original print handlers
+  wasmModule.print    = origPrint;
+  wasmModule.printErr = origPrintErr;
+
+  btn.classList.remove('running');
+  btn.innerHTML = '<span class="run-icon">▶</span> Run';
+
+  const body = document.getElementById('outputBody');
+  body.innerHTML = '';
+
+  const hasError = stderr.trim().length > 0 ||
+                   stdout.includes('Unsuccessful') ||
+                   stdout.includes('Number of Errors');
+
+  // Render stderr lines (compiler errors) in red
+  if (stderr.trim()) {
+    stderr.trim().split('\n').forEach(line => {
       const el = document.createElement('span');
-      el.className = 'output-line ' + line.t;
-      el.textContent = line.s;
+      el.className = 'output-line error';
+      el.textContent = line;
+      body.appendChild(el);
+      body.appendChild(document.createElement('br'));
+
+      // Parse "LINE: message" format from your compiler's ParseError()
+      // e.g. "8: Missing semicolon"
+      const match = line.match(/^(\d+):\s+(.+)/);
+      if (match && editor) {
+        const lineNum = parseInt(match[1]);
+        const msg = match[2];
+        monaco.editor.setModelMarkers(editor.getModel(), 'pascal-lint', [{
+          severity: monaco.MarkerSeverity.Error,
+          startLineNumber: lineNum,
+          startColumn: 1,
+          endLineNumber: lineNum,
+          endColumn: 999,
+          message: msg,
+          source: 'pascal-compiler'
+        }]);
+      }
+    });
+  }
+
+  // Render stdout lines
+  if (stdout.trim()) {
+    stdout.trim().split('\n').forEach(line => {
+      const el = document.createElement('span');
+      // Style the final status line differently
+      if (line.includes('Successful Execution')) {
+        el.className = 'output-line info';
+      } else if (line.includes('Unsuccessful') || line.includes('Number of Errors')) {
+        el.className = 'output-line error';
+      } else {
+        el.className = 'output-line success';
+      }
+      el.textContent = line;
       body.appendChild(el);
       body.appendChild(document.createElement('br'));
     });
+  }
 
-    // Set Monaco error markers
-    if (ex.errors && editor) {
-      const markers = ex.errors.map(e => ({
-        severity: monaco.MarkerSeverity.Error,
-        startLineNumber: e.line,
-        startColumn: e.col,
-        endLineNumber: e.line,
-        endColumn: 999,
-        message: e.msg,
-        source: 'pascal-compiler'
-      }));
-      monaco.editor.setModelMarkers(editor.getModel(), 'pascal-lint', markers);
-    }
+  if (!stdout.trim() && !stderr.trim()) {
+    const el = document.createElement('span');
+    el.className = 'output-line dim';
+    el.textContent = '(no output)';
+    body.appendChild(el);
+  }
 
-    if (hasError) {
-      setStatus('error');
-      document.getElementById('editorDot').className = 'pane-dot err';
-      document.getElementById('outputDot').className = 'pane-dot err';
-    } else {
-      setStatus('ok');
-      document.getElementById('editorDot').className = 'pane-dot ok';
-      document.getElementById('outputDot').className = 'pane-dot ok';
-    }
-  }, delay);
+  if (hasError) {
+    setStatus('error');
+    document.getElementById('editorDot').className = 'pane-dot err';
+    document.getElementById('outputDot').className = 'pane-dot err';
+  } else {
+    setStatus('ok');
+    document.getElementById('editorDot').className = 'pane-dot ok';
+    document.getElementById('outputDot').className = 'pane-dot ok';
+  }
+}
+
+function showOutput(msg, isError) {
+  const body = document.getElementById('outputBody');
+  body.innerHTML = '';
+  const el = document.createElement('span');
+  el.className = 'output-line ' + (isError ? 'error' : 'success');
+  el.textContent = msg;
+  body.appendChild(el);
 }
 
 // ── UI HELPERS ────────────────────────────────────────────────────
