@@ -11,7 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 
 <!-- Emscripten Wasm glue -->
-<script src="parser.js?v=4"></script>
+<script src="parser.js?v=5"></script>
 
 <style>
   :root {
@@ -536,10 +536,22 @@ else
           <span class="syn-desc">Uses <code style="color:var(--accent)">then</code> keyword. For multiple statements use <code style="color:var(--accent)">begin...end</code>.</span>
         </div>
         <div class="syn-row">
-          <code class="syn-code">= > < >= <=</code>
-          <span class="syn-desc">Comparison operators. Equality is <code style="color:var(--accent)">=</code> (not <code style="color:var(--accent)">==</code>).</span>
+          <code class="syn-code">= > <</code>
+          <span class="syn-desc">Comparison operators. Equality is <code style="color:var(--accent)">=</code>. Note: <code style="color:var(--accent)">&gt;=</code> and <code style="color:var(--accent)">&lt;=</code> are not supported — use <code style="color:var(--accent)">&gt;</code> and <code style="color:var(--accent)">&lt;</code> with adjusted values.</span>
         </div>
       </div>
+
+      <div class="syn-section">
+        <div class="syn-heading">Nested If</div>
+        <div class="syn-row">
+          <code class="syn-code">if x > 10 then
+  writeln('big')
+else
+  if x > 5 then
+    writeln('medium')
+  else
+    writeln('small');</code>
+          <span class="syn-desc">No <code style="color:var(--accent)">else if</code> keyword — chain by nesting <code style="color:var(--accent)">if</code> inside <code style="color:var(--accent)">else</code>.</span>
 
       <div class="syn-section">
         <div class="syn-heading">Loops</div>
@@ -644,11 +656,13 @@ const EXAMPLES = {
     label: 'Hello World',
     code: `program Hello;
 var
-  message : string;
+  name : string;
+  x : integer;
 begin
-  message := 'Hello, World!';
-  writeln(message);
-  writeln('Running in your browser via WebAssembly.')
+  name := 'World';
+  x := 42;
+  writeln('Hello, ', name);
+  writeln('The answer is ', x)
 end.`
   },
 
@@ -656,7 +670,8 @@ end.`
     label: 'Arithmetic',
     code: `program Arithmetic;
 var
-  a, b, result : integer;
+  a, b : integer;
+  r : real;
 begin
   a := 15;
   b := 4;
@@ -665,9 +680,8 @@ begin
   writeln(a * b);
   writeln(a div b);
   writeln(a mod b);
-  result := (a * b) + (a - b);
-  write('Result: ');
-  writeln(result)
+  r := 8.75;
+  writeln('Real: ', r)
 end.`
   },
 
@@ -675,59 +689,31 @@ end.`
     label: 'Conditionals',
     code: `program Conditionals;
 var
-  x, score : integer;
-  a, b : boolean;
+  i, j : integer;
+  bool1, bool2 : boolean;
 begin
-  x := 42;
-  if x > 100 then
-    writeln('Large number')
-  else if x > 10 then
-    writeln('Medium number')
-  else
-    writeln('Small number');
-
-  a := true;
-  b := false;
-  if a and (not b) then
-    writeln('Logic works!');
-
-  score := 85;
-  if score >= 90 then
-    writeln('Grade: A')
-  else if score >= 80 then
-    writeln('Grade: B')
-  else
-    writeln('Grade: C or below')
+  i := 9;
+  j := 2;
+  bool1 := true;
+  bool2 := false;
+  bool1 := bool2 or i > j and bool1;
+  writeln('The output results are ', bool2, ', ', bool1, ', ', i div j)
 end.`
   },
 
   loops: {
-    label: 'Loops',
-    code: `program Loops;
+    label: 'Circle',
+    code: `program Circle;
 var
-  i, sum, n : integer;
+  r, a, p : real;
 begin
-  i := 1;
-  sum := 0;
-  while i <= 5 do
-  begin
-    sum := sum + i;
-    i := i + 1
-  end;
-  write('Sum 1-5: ');
-  writeln(sum);
-
-  n := 3;
-  i := 1;
-  while i <= 5 do
-  begin
-    write(n);
-    write(' x ');
-    write(i);
-    write(' = ');
-    writeln(n * i);
-    i := i + 1
-  end
+  r := 8;
+  p := 0;
+  a := 0;
+  if r > 5 then a := 3.14 * r * r;
+  if a > 0 then p := 2 * 3.14 * r;
+  writeln('Area: ', a);
+  writeln('Perimeter: ', p)
 end.`
   },
 
