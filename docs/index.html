@@ -831,6 +831,11 @@ require(['vs/editor/editor.main'], function() {
     monaco.editor.setModelMarkers(editor.getModel(), 'pascal-lint', []);
     setStatus('idle');
   });
+
+  // Load Emscripten AFTER Monaco is fully initialized to avoid require() conflict
+  const wasmScript = document.createElement('script');
+  wasmScript.src = 'parser.js?v=6';
+  document.body.appendChild(wasmScript);
 });
 
 // ── EXAMPLE LOADING ───────────────────────────────────────────────
@@ -1054,7 +1059,5 @@ document.addEventListener('keydown', e => {
   }
 });
 </script>
-<!-- Emscripten Wasm glue — loaded last to avoid AMD require conflict with Monaco -->
-<script src="parser.js?v=6"></script>
 </body>
 </html>
