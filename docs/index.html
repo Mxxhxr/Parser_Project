@@ -10,6 +10,16 @@
 <!-- Monaco Editor -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 
+<!-- Suppress Node.js module detection so Emscripten doesn't hijack Monaco's require -->
+<script>
+  var _savedModule = typeof module !== 'undefined' ? module : undefined;
+  var module = undefined;
+</script>
+<script src="parser.js?v=7"></script>
+<script>
+  if (_savedModule !== undefined) module = _savedModule;
+</script>
+
 <style>
   :root {
     --bg:          #0d0d0d;
@@ -831,11 +841,6 @@ require(['vs/editor/editor.main'], function() {
     monaco.editor.setModelMarkers(editor.getModel(), 'pascal-lint', []);
     setStatus('idle');
   });
-
-  // Load Emscripten AFTER Monaco is fully initialized to avoid require() conflict
-  const wasmScript = document.createElement('script');
-  wasmScript.src = 'parser.js?v=6';
-  document.body.appendChild(wasmScript);
 });
 
 // ── EXAMPLE LOADING ───────────────────────────────────────────────
