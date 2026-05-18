@@ -10,9 +10,6 @@
 <!-- Monaco Editor -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 
-<!-- Emscripten Wasm glue -->
-<script src="parser.js?v=5"></script>
-
 <style>
   :root {
     --bg:          #0d0d0d;
@@ -1057,5 +1054,7 @@ document.addEventListener('keydown', e => {
   }
 });
 </script>
+<!-- Emscripten Wasm glue — loaded last to avoid AMD require conflict with Monaco -->
+<script src="parser.js?v=6"></script>
 </body>
 </html>
