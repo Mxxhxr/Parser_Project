@@ -4185,6 +4185,10 @@ var findStringEnd = (heapOrArray, idx, maxBytesToRead, ignoreNul) => {
 
 
 
+  var print = out;
+
+  var printErr = err;
+
   var FS_createPath = (...args) => FS.createPath(...args);
 
 
@@ -4257,6 +4261,8 @@ if (Module['wasmBinary']) wasmBinary = Module['wasmBinary'];
   Module['FS'] = FS;
   Module['FS_createDataFile'] = FS_createDataFile;
   Module['FS_createLazyFile'] = FS_createLazyFile;
+  Module['print'] = print;
+  Module['printErr'] = printErr;
   var missingLibrarySymbols = [
   'writeI53ToI64',
   'writeI53ToI64Clamped',
@@ -4642,8 +4648,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'IDBStore',
   'SDL',
   'SDL_gfx',
-  'print',
-  'printErr',
   'jstoi_s',
 ];
 unexportedSymbols.forEach(unexportedRuntimeSymbol);
