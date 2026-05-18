@@ -11,7 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 
 <!-- Emscripten Wasm glue -->
-<script src="parser.js?v=3"></script>
+<script src="parser.js?v=4"></script>
 
 <style>
   :root {
@@ -746,20 +746,8 @@ end.`
 };
 
 // ── WASM MODULE ───────────────────────────────────────────────────
-let wasmModule = null;
 let capturedStdout = '';
 let capturedStderr = '';
-
-// Initialize the Wasm module on page load
-createModule({
-  print:    (s) => { capturedStdout += s + '\n'; },
-  printErr: (s) => { capturedStderr += s + '\n'; },
-}).then(mod => {
-  wasmModule = mod;
-  console.log('Wasm compiler loaded.');
-}).catch(err => {
-  console.error('Failed to load Wasm module:', err);
-});
 
 // ── MONACO SETUP ─────────────────────────────────────────────────
 let editor;
@@ -879,7 +867,7 @@ function loadExample(key) {
 }
 
 // ── RUN — real Wasm compiler ──────────────────────────────────────
-async function runCode() {
+function runCode() {
   if (!editor) return;
   const btn = document.getElementById('runBtn');
   if (btn.classList.contains('running')) return;
@@ -890,14 +878,6 @@ async function runCode() {
   clearOutput();
   monaco.editor.setModelMarkers(editor.getModel(), 'pascal-lint', []);
 
-  if (!wasmModule) {
-    showOutput('ERROR: Compiler not loaded yet. Please wait a moment and try again.', true);
-    btn.classList.remove('running');
-    btn.innerHTML = '<span class="run-icon">▶</span> Run';
-    setStatus('error');
-    return;
-  }
-
   const code = editor.getValue();
   const filename = '/tmp/program.pas';
 
@@ -905,26 +885,25 @@ async function runCode() {
   capturedStdout = '';
   capturedStderr = '';
 
-  try {
-    // Write source code into the Wasm virtual filesystem
-    wasmModule.FS.writeFile(filename, code);
+  // Create a fresh module instance on every run (callMain can only run once per instance)
+  createModule({
+    print:    (s) => { capturedStdout += s + '\n'; },
+    printErr: (s) => { capturedStderr += s + '\n'; },
+  }).then(mod => {
+    try {
+      mod.FS.writeFile(filename, code);
+      mod.callMain([filename]);
+    } catch (e) {
+      capturedStderr += 'Runtime exception: ' + e.toString() + '\n';
+    }
 
-    // Call the compiler's main() with the filename as argv[1]
-    wasmModule.callMain([filename]);
-  } catch (e) {
-    capturedStderr += 'Runtime exception: ' + e.toString() + '\n';
-  }
+    const stdout = capturedStdout;
+    const stderr = capturedStderr;
 
-  const stdout = capturedStdout;
-  const stderr = capturedStderr;
+    const body = document.getElementById('outputBody');
+    body.innerHTML = '';
 
-  btn.classList.remove('running');
-  btn.innerHTML = '<span class="run-icon">▶</span> Run';
-
-  const body = document.getElementById('outputBody');
-  body.innerHTML = '';
-
-  const hasError = stderr.trim().length > 0 ||
+    const hasError = stderr.trim().length > 0 ||
                    stdout.includes('Unsuccessful') ||
                    stdout.includes('Number of Errors');
 
@@ -990,6 +969,15 @@ async function runCode() {
     document.getElementById('editorDot').className = 'pane-dot ok';
     document.getElementById('outputDot').className = 'pane-dot ok';
   }
+
+    btn.classList.remove('running');
+    btn.innerHTML = '<span class="run-icon">▶</span> Run';
+  }).catch(err => {
+    btn.classList.remove('running');
+    btn.innerHTML = '<span class="run-icon">▶</span> Run';
+    showOutput('ERROR: Failed to load compiler: ' + err.toString(), true);
+    setStatus('error');
+  });
 }
 
 function showOutput(msg, isError) {
