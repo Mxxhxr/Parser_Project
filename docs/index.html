@@ -11,7 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 
 <!-- Emscripten Wasm glue -->
-<script src="parser.js?v=2"></script>
+<script src="parser.js?v=3"></script>
 
 <style>
   :root {
@@ -747,9 +747,14 @@ end.`
 
 // ── WASM MODULE ───────────────────────────────────────────────────
 let wasmModule = null;
+let capturedStdout = '';
+let capturedStderr = '';
 
 // Initialize the Wasm module on page load
-createModule().then(mod => {
+createModule({
+  print:    (s) => { capturedStdout += s + '\n'; },
+  printErr: (s) => { capturedStderr += s + '\n'; },
+}).then(mod => {
   wasmModule = mod;
   console.log('Wasm compiler loaded.');
 }).catch(err => {
@@ -896,13 +901,9 @@ async function runCode() {
   const code = editor.getValue();
   const filename = '/tmp/program.pas';
 
-  // Capture stdout and stderr
-  let stdout = '';
-  let stderr = '';
-  const origPrint   = wasmModule.print;
-  const origPrintErr = wasmModule.printErr;
-  wasmModule.print    = (s) => { stdout += s + '\n'; };
-  wasmModule.printErr = (s) => { stderr += s + '\n'; };
+  // Reset capture buffers
+  capturedStdout = '';
+  capturedStderr = '';
 
   try {
     // Write source code into the Wasm virtual filesystem
@@ -911,12 +912,11 @@ async function runCode() {
     // Call the compiler's main() with the filename as argv[1]
     wasmModule.callMain([filename]);
   } catch (e) {
-    stderr += 'Runtime exception: ' + e.toString() + '\n';
+    capturedStderr += 'Runtime exception: ' + e.toString() + '\n';
   }
 
-  // Restore original print handlers
-  wasmModule.print    = origPrint;
-  wasmModule.printErr = origPrintErr;
+  const stdout = capturedStdout;
+  const stderr = capturedStderr;
 
   btn.classList.remove('running');
   btn.innerHTML = '<span class="run-icon">▶</span> Run';
