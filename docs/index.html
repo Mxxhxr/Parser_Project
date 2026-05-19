@@ -451,7 +451,7 @@
     <button class="example-btn active" onclick="loadExample('hello')">Hello World</button>
     <button class="example-btn" onclick="loadExample('arithmetic')">Arithmetic</button>
     <button class="example-btn" onclick="loadExample('conditionals')">Conditionals</button>
-    <button class="example-btn" onclick="loadExample('loops')">Loops</button>
+    <button class="example-btn" onclick="loadExample('loops')">Mixed Types</button>
     <button class="example-btn" onclick="loadExample('error')">Syntax Error ↯</button>
   </div>
   <div class="nav-right">
@@ -688,17 +688,26 @@ end.`
   },
 
   loops: {
-    label: 'Circle Area',
-    code: `program CircleArea;
+    label: 'Mixed Types',
+    code: `program MixedTypes;
 var
-  r, a, p : real;
+  i, j : integer;
+  r, b : real;
+  bool1, bool2 : boolean;
+  str : string;
 begin
-  r := 8.0;
-  a := 3.14 * r * r;
-  p := 2.0 * 3.14 * r;
-  writeln('Radius: ', r);
-  writeln('Area: ', a);
-  writeln('Perimeter: ', p)
+  i := 9;
+  j := 2;
+  r := 5.75;
+  bool1 := true;
+  bool2 := false;
+  str := 'Hello';
+  bool1 := bool2 or i > j and bool1;
+  b := r * i;
+  writeln('String: ', str);
+  writeln('Integer division: ', i div j);
+  writeln('Real result: ', b);
+  writeln('Boolean: ', bool1)
 end.`
   },
 
