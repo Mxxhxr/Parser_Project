@@ -675,59 +675,30 @@ end.`
     label: 'Conditionals',
     code: `program Conditionals;
 var
-  x, score : integer;
-  a, b : boolean;
+  i, j : integer;
+  bool1, bool2 : boolean;
 begin
-  x := 42;
-  if x > 100 then
-    writeln('Large number')
-  else if x > 10 then
-    writeln('Medium number')
-  else
-    writeln('Small number');
-
-  a := true;
-  b := false;
-  if a and (not b) then
-    writeln('Logic works!');
-
-  score := 85;
-  if score >= 90 then
-    writeln('Grade: A')
-  else if score >= 80 then
-    writeln('Grade: B')
-  else
-    writeln('Grade: C or below')
+  i := 9;
+  j := 2;
+  bool1 := true;
+  bool2 := false;
+  bool1 := bool2 or i > j and bool1;
+  writeln('The output results are ', bool2, ', ', bool1, ', ', i div j)
 end.`
   },
 
   loops: {
-    label: 'Loops',
-    code: `program Loops;
+    label: 'Circle Area',
+    code: `program CircleArea;
 var
-  i, sum, n : integer;
+  r, a, p : real;
 begin
-  i := 1;
-  sum := 0;
-  while i < 6 do
-  begin
-    sum := sum + i;
-    i := i + 1
-  end;
-  write('Sum 1-5: ');
-  writeln(sum);
-
-  n := 3;
-  i := 1;
-  while i < 6 do
-  begin
-    write(n);
-    write(' x ');
-    write(i);
-    write(' = ');
-    writeln(n * i);
-    i := i + 1
-  end
+  r := 8.0;
+  a := 3.14 * r * r;
+  p := 2.0 * 3.14 * r;
+  writeln('Radius: ', r);
+  writeln('Area: ', a);
+  writeln('Perimeter: ', p)
 end.`
   },
 
