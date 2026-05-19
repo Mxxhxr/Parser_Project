@@ -206,7 +206,6 @@
     transition: color 0.15s;
   }
   .user-tab-close:hover { color: var(--error); }
-  .add-tab-btn {
     font-size: 16px;
     width: 24px;
     height: 24px;
@@ -574,7 +573,6 @@
     <div id="userTabs"></div>
     <button class="add-tab-btn" onclick="addUserTab()" title="New file">+</button>
     <div id="userTabs"></div>
-    <button class="add-tab-btn" onclick="addUserTab()" title="New file">+</button>
   </div>
   <div class="nav-right">
 
@@ -1046,23 +1044,6 @@ function closeUserTab(id) {
 let userTabs = {};
 let userTabCounter = 0;
 let currentUserTab = null;
-
-function addUserTab() {
-  userTabCounter++;
-  const id = 'user_' + userTabCounter;
-  const name = 'Untitled ' + userTabCounter;
-  userTabs[id] = {
-    name: name,
-    code: `program Untitled;
-var
-
-begin
-
-end.`
-  };
-  renderUserTabs();
-  switchToUserTab(id);
-}
 
 function renderUserTabs() {
   const container = document.getElementById('userTabs');
