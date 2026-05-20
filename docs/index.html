@@ -981,7 +981,7 @@ function renderUserTabs() {
       nameEl.style.cursor = 'text';
       nameEl.select();
     };
-    nameEl.onblur = () => {
+    nameEl.onblur = () => { nameEl.readOnly = true; nameEl.style.cursor = 'pointer'; userTabs[id].name = nameEl.value.trim() || 'Untitled'; };
       nameEl.readOnly = true;
       nameEl.style.cursor = 'pointer';
       userTabs[id].name = nameEl.value.trim() || 'Untitled';
