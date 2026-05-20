@@ -172,6 +172,8 @@
     line-height: 1;
   }
   .add-tab-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+  #userTabs { display: flex; flex-direction: row; overflow-x: auto; overflow-y: visible; gap: 6px; scrollbar-width: none; flex-shrink: 1; min-width: 0; }
+  #userTabs::-webkit-scrollbar { display: none; }
   .user-tab {
     font-family: var(--mono);
     font-size: 11px;
