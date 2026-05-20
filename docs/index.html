@@ -964,26 +964,38 @@ function renderUserTabs() {
     const tab = userTabs[id];
     const div = document.createElement('div');
     div.className = 'user-tab' + (currentUserTab === id ? ' active' : '');
-    div.onclick = (e) => { if (e.target.classList.contains('user-tab-close')) return; switchToUserTab(id); };
-
     const nameEl = document.createElement('input');
     nameEl.className = 'user-tab-name';
     nameEl.value = tab.name;
-    nameEl.title = 'Click to rename';
     nameEl.readOnly = true;
-    nameEl.style.pointerEvents = 'none';
-    nameEl.ondblclick = (e) => { e.stopPropagation(); nameEl.readOnly = false; nameEl.style.pointerEvents = 'auto'; nameEl.select(); };
-    nameEl.onblur = () => { nameEl.readOnly = true; nameEl.style.pointerEvents = 'none'; userTabs[id].name = nameEl.value || 'Untitled'; };
-    nameEl.onkeydown = (e) => { if (e.key === 'Enter') e.target.blur(); e.stopPropagation(); };
-    nameEl.onchange = (e) => { userTabs[id].name = e.target.value || 'Untitled'; };
-    nameEl.onkeydown = (e) => { if (e.key === 'Enter') e.target.blur(); };
-
+    nameEl.title = 'Double-click to rename';
+    nameEl.style.cursor = 'pointer';
+    div.onclick = (e) => {
+      if (e.target.classList.contains('user-tab-close')) return;
+      if (nameEl.readOnly === false) return;
+      switchToUserTab(id);
+    };
+    nameEl.ondblclick = (e) => {
+      e.stopPropagation();
+      nameEl.readOnly = false;
+      nameEl.style.cursor = 'text';
+      nameEl.select();
+    };
+    nameEl.onblur = () => {
+      nameEl.readOnly = true;
+      nameEl.style.cursor = 'pointer';
+      userTabs[id].name = nameEl.value.trim() || 'Untitled';
+      renderUserTabs();
+    };
+    nameEl.onkeydown = (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') e.target.blur();
+    };
     const closeBtn = document.createElement('button');
     closeBtn.className = 'user-tab-close';
     closeBtn.innerHTML = '&times;';
     closeBtn.title = 'Close';
     closeBtn.onclick = (e) => { e.stopPropagation(); closeUserTab(id); };
-
     div.appendChild(nameEl);
     div.appendChild(closeBtn);
     container.appendChild(div);
@@ -1032,7 +1044,7 @@ function closeUserTab(id) {
 
 function loadExample(key) {
   currentExample = key;
-  currentUserTab = null;
+  if (currentUserTab && userTabs[currentUserTab] && editor) { userTabs[currentUserTab].code = editor.getValue(); }
   currentUserTab = null;
   document.querySelectorAll('.example-btn').forEach(b => b.classList.remove('active'));
   event.target.classList.add('active');
