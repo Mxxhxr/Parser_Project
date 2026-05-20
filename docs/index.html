@@ -972,10 +972,12 @@ function renderUserTabs() {
     const tab = userTabs[id];
     const div = document.createElement('div');
     div.className = 'user-tab' + (currentUserTab === id ? ' active' : '');
+    let clickTimer = null;
     div.onclick = (e) => {
       if (e.target.classList.contains('user-tab-close')) return;
-      if (nameEl.readOnly === false) return;
-      switchToUserTab(id);
+      if (nameEl && nameEl.readOnly === false) return;
+      if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; return; }
+      clickTimer = setTimeout(() => { clickTimer = null; switchToUserTab(id); }, 250);
     };
     const nameEl = document.createElement('input');
     nameEl.className = 'user-tab-name';
