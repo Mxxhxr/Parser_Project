@@ -982,11 +982,6 @@ function renderUserTabs() {
       nameEl.select();
     };
     nameEl.onblur = () => { nameEl.readOnly = true; nameEl.style.cursor = 'pointer'; userTabs[id].name = nameEl.value.trim() || 'Untitled'; };
-      nameEl.readOnly = true;
-      nameEl.style.cursor = 'pointer';
-      userTabs[id].name = nameEl.value.trim() || 'Untitled';
-      renderUserTabs();
-    };
     nameEl.onkeydown = (e) => {
       e.stopPropagation();
       if (e.key === 'Enter') e.target.blur();
