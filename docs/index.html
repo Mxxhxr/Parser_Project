@@ -81,6 +81,9 @@
     align-items: center;
     gap: 6px;
     flex: 1;
+    overflow: hidden;
+    flex-wrap: nowrap;
+    min-width: 0;
   }
 
   .nav-label {
@@ -975,7 +978,7 @@ function renderUserTabs() {
       if (nameEl.readOnly === false) return;
       switchToUserTab(id);
     };
-    nameEl.ondblclick = (e) => {
+    nameEl.ondblclick = (e) => { e.stopPropagation(); e.preventDefault(); nameEl.readOnly = false; nameEl.style.cursor = 'text'; setTimeout(() => { nameEl.focus(); nameEl.select(); }, 10); };
       e.stopPropagation();
       nameEl.readOnly = false;
       nameEl.style.cursor = 'text';
