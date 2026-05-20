@@ -967,28 +967,34 @@ function renderUserTabs() {
     const tab = userTabs[id];
     const div = document.createElement('div');
     div.className = 'user-tab' + (currentUserTab === id ? ' active' : '');
-    const nameEl = document.createElement('input');
-    nameEl.className = 'user-tab-name';
-    nameEl.value = tab.name;
-    nameEl.readOnly = true;
-    nameEl.title = 'Double-click to rename';
-    nameEl.style.cursor = 'pointer';
     div.onclick = (e) => {
       if (e.target.classList.contains('user-tab-close')) return;
       if (nameEl.readOnly === false) return;
       switchToUserTab(id);
     };
-    nameEl.ondblclick = (e) => { e.stopPropagation(); e.preventDefault(); nameEl.readOnly = false; nameEl.style.cursor = 'text'; setTimeout(() => { nameEl.focus(); nameEl.select(); }, 10); };
+    const nameEl = document.createElement('input');
+    nameEl.className = 'user-tab-name';
+    nameEl.value = tab.name;
+    nameEl.readOnly = true;
+    nameEl.style.cursor = 'pointer';
+    nameEl.title = 'Double-click to rename';
+    nameEl.ondblclick = (e) => {
       e.stopPropagation();
       nameEl.readOnly = false;
       nameEl.style.cursor = 'text';
+      nameEl.focus();
       nameEl.select();
     };
-    nameEl.onblur = () => { nameEl.readOnly = true; nameEl.style.cursor = 'pointer'; userTabs[id].name = nameEl.value.trim() || 'Untitled'; };
+    nameEl.onblur = () => {
+      nameEl.readOnly = true;
+      nameEl.style.cursor = 'pointer';
+      userTabs[id].name = nameEl.value.trim() || 'Untitled';
+    };
     nameEl.onkeydown = (e) => {
       e.stopPropagation();
       if (e.key === 'Enter') e.target.blur();
     };
+    nameEl.onmousedown = (e) => e.stopPropagation();
     const closeBtn = document.createElement('button');
     closeBtn.className = 'user-tab-close';
     closeBtn.innerHTML = '&times;';
