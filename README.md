@@ -1,40 +1,52 @@
-﻿# Compiler for a simple Perl-Like Language in C++
+# Compiler for a Pascal-Like Language in C++
 
-A compiler for a simple Perl-like language, implemented in C++. It includes a lexical analyzer and a parser-interpreter capable of analyzing, parsing, and executing programs written in the defined language. The compiler evaluates the program, produces the correct outputs, and provides clear error messages when syntax errors are detected.
+A compiler for a custom Pascal-like language, implemented in C++. It includes a lexical analyzer and a parser-interpreter capable of analyzing, parsing, and executing programs written in the defined language. The compiler evaluates the program, produces the correct outputs, and provides clear error messages when syntax or runtime errors are detected.
 
+## 🌐 Live Demo
 
+Try the compiler directly in your browser — no installation required:
+**[Mxxhxr.github.io/Parser_Project](https://Mxxhxr.github.io/Parser_Project)**
 
-Contents:
-- A lexer (`lexer.cpp`)
-- A parser (`parser.cpp`)
-- A value system (`value.cpp`)
-- A main driver program (`main.cpp`)
+The live IDE features:
+- Monaco Editor (the engine powering VS Code) with custom syntax highlighting for the language
+- Real compiler output powered by WebAssembly — the actual C++ compiler runs in your browser
+- Error highlighting that marks the exact line reported by the compiler
+- Pre-loaded example programs and a syntax reference panel
+- User-created file tabs for writing and running your own programs
 
 ---
 
 ## 📦 Project Structure
 
-/src  
-├── main.cpp  
-├── lexer.cpp / lexer.h  
-├── parser.cpp / parser.h  
-├── value.cpp / value.h  
-/test_cases  
-└── testprog1  (sample input file)
+```
+/src
+├── main.cpp
+├── lexer.cpp / lexer.h
+├── parser.cpp / parser.h
+├── value.cpp / value.h
+/Test_Cases
+└── testprog1 ... testprog13  (sample input files with expected outputs)
+/docs
+└── index.html  (in-browser IDE)
+```
 
 ---
 
-## 🚀 How to Build & Run
+## 🚀 How to Build & Run Locally
 
 ### ✅ Option 1: Compile with g++
 
 If you have `g++` installed, run:
 
-> `g++ main.cpp lexer.cpp parser.cpp value.cpp -o parser`
+```
+g++ src/main.cpp src/lexer.cpp src/parser.cpp src/value.cpp -o parser
+```
 
 Then to run the program:
 
-> `./parser test_cases/testprog`
+```
+./parser Test_Cases/testprog1
+```
 
 ---
 
@@ -42,15 +54,21 @@ Then to run the program:
 
 If you have `make` installed, run:
 
-> `make`
+```
+make
+```
 
 To clean up the build files:
 
-> `make clean`
+```
+make clean
+```
 
 To run the program:
 
-> `./parser test_cases/testprog1`
+```
+./parser Test_Cases/testprog1
+```
 
 ---
 
@@ -67,4 +85,6 @@ To run the program:
 
 ## 💡 Example Run Command
 
-./parser test_cases/testprog1
+```
+./parser Test_Cases/testprog1
+```
